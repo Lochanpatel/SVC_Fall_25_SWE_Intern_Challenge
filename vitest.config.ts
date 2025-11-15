@@ -14,7 +14,7 @@ export default defineConfig({
     name: 'frontend',
     globals: true,
     environment: 'jsdom',
-    setupFiles: 'test/setupTests.ts',
+    setupFiles: 'tests/setupTests.ts',
     include: ['client/**/*.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
