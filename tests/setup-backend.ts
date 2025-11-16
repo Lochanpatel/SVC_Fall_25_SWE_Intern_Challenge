@@ -6,6 +6,7 @@ import { http, HttpResponse } from "msw";
 import {
   ensureDatabaseEnvironment,
   cleanupDatabaseEnvironment,
+  loadSchema,
 } from "./test-db-setup";
 
 let pool: Pool | null = null;
@@ -33,16 +34,18 @@ export const mockServer = setupServer(
 
 beforeAll(async () => {
   console.log("🚀 Setting up backend tests...");
+
   await ensureDatabaseEnvironment();
 
   pool = new Pool({
     connectionString: process.env.TEST_DATABASE_URL,
   });
 
+  // ⭐ CRITICAL: LOAD DB SCHEMA HERE
+  await loadSchema(pool);
+
   mockServer.listen({ onUnhandledRequest: "bypass" });
 
-  process.env.NODE_ENV = "test";
-  process.env.PING_MESSAGE = "test ping";
   console.log("✅ Backend tests ready");
 });
 
@@ -57,7 +60,9 @@ beforeEach(() => mockServer.resetHandlers());
 
 afterEach(async () => {
   if (!pool) return;
+
   try {
+    // clean test data
     await pool.query("DELETE FROM contractors");
     await pool.query("DELETE FROM users");
   } catch (e) {
