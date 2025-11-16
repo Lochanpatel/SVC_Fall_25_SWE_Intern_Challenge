@@ -1,20 +1,13 @@
-// vitest.config.ts
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './client'),
-    },
-  },
   test: {
     name: 'frontend',
     globals: true,
     environment: 'jsdom',
-    setupFiles: 'tests/setupTests.ts',
     include: ['client/**/*.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
@@ -36,6 +29,11 @@ export default defineConfig({
         },
       },
       all: true,
+    },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './client'),
     },
   },
 });
