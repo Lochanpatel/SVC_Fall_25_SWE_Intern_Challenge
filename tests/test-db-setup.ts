@@ -1,4 +1,7 @@
 import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
+import { Pool } from "pg";
 
 export async function ensureDatabaseEnvironment() {
   console.log("🔧 Using CI PostgreSQL service. Skipping auto-install.");
@@ -26,6 +29,24 @@ export async function ensureDatabaseEnvironment() {
   }
 
   console.log("✅ PostgreSQL ready");
+}
+
+/**
+ * Load schema from database-setup.sql
+ */
+export async function loadSchema(pool: Pool) {
+  const schemaPath = path.join(__dirname, "database-setup.sql");
+
+  if (!fs.existsSync(schemaPath)) {
+    throw new Error("❌ Missing tests/database-setup.sql");
+  }
+
+  const sql = fs.readFileSync(schemaPath, "utf8");
+  console.log("📦 Applying database schema...");
+
+  await pool.query(sql);
+
+  console.log("✅ Schema applied!");
 }
 
 export async function cleanupDatabaseEnvironment() {
