@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches: [main, develop]
@@ -9,6 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # set default env for job if needed; keep secrets for real supabase keys
+      NODE_ENV: test
 
     services:
       postgres:
@@ -34,8 +36,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install root deps
         run: npm ci
+
+      - name: Install client deps
+        run: |
+          cd client
+          npm ci
 
       - name: Wait for Postgres
         run: |
@@ -50,14 +57,24 @@ jobs:
           PGPASSWORD: test
 
       - name: Run frontend tests with coverage
-        run: npm run test:frontend
+        # ensure NODE_ENV=test and provide supabase test env values to avoid the "Missing Supabase" error
+        env:
+          NODE_ENV: test
+          SUPABASE_URL: http://localhost          # dummy value for tests
+          SUPABASE_ANON_KEY: test-anon-key        # dummy value for tests
+        run: |
+          cd client
+          npm run test:frontend
 
       - name: Run backend tests with coverage
         env:
           NODE_ENV: test
           TEST_DATABASE_URL: postgresql://test:test@localhost:5432/fairdatause_test
           DATABASE_URL: postgresql://test:test@localhost:5432/fairdatause_test
-        run: npm run test:backend:coverage
+        run: |
+          # if backend is in server/ or root backend script, adjust path accordingly
+          cd server || true
+          npm run test:backend:coverage
 
       - name: Upload coverage reports
         if: always()
@@ -65,26 +82,28 @@ jobs:
         with:
           name: coverage-reports
           path: |
-            coverage/frontend
-            coverage/backend
+            client/coverage
+            server/coverage
 
       - name: Check coverage thresholds
         run: |
-          if [ ! -f coverage/frontend/lcov.info ]; then
+          if [ ! -f client/coverage/lcov.info ]; then
             echo "Frontend coverage report not found"
             exit 1
           fi
-          if [ ! -f coverage/backend/lcov.info ]; then
+          if [ ! -f server/coverage/lcov.info ]; then
             echo "Backend coverage report not found"
             exit 1
           fi
 
       - name: Build project
-        run: npm run build
+        run: |
+          cd client
+          npm run build
 
       - name: Archive build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: dist
+          path: client/dist
