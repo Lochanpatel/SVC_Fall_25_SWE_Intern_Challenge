@@ -3,35 +3,43 @@
   "private": true,
   "type": "module",
   "pkg": {
-    "assets": [
-      "dist/spa/*"
-    ],
-    "scripts": [
-      "dist/server/**/*.js"
-    ]
+    "assets": ["dist/spa/*"],
+    "scripts": ["dist/server/**/*.js"]
   },
+
   "scripts": {
     "dev": "vite",
+
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "vite build --config vite.config.server.ts",
+
     "start": "node dist/server/node-build.mjs",
+
     "test": "npm run test:frontend && npm run test:backend:coverage",
-    "test:frontend": "vitest --config vitest.config.ts --coverage --run",
+
+    "test:frontend": "vitest --config vitest.config.ts --run",
+    "test:frontend:coverage": "vitest --config vitest.config.ts --coverage --run --coverage.dir=coverage/frontend",
+
     "test:backend": "vitest --config vitest.config.backend.ts --run",
     "test:backend:watch": "vitest --config vitest.config.backend.ts",
-    "test:backend:coverage": "vitest --config vitest.config.backend.ts --coverage --run",
-    "test:all": "npm run test:frontend && npm run test:backend:coverage",
+    "test:backend:coverage": "vitest --config vitest.config.backend.ts --coverage --run --coverage.dir=coverage/backend",
+
+    "test:all": "npm run test:frontend:coverage && npm run test:backend:coverage",
     "test:coverage": "npm run test:all",
+
     "test:db:setup": "docker run --name fairdatause-test-db -e POSTGRES_DB=fairdatause_test -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:15",
     "test:db:start": "docker start fairdatause-test-db",
     "test:db:stop": "docker stop fairdatause-test-db",
     "test:db:clean": "docker rm -f fairdatause-test-db",
     "test:db:logs": "docker logs fairdatause-test-db",
+
     "test:unit": "vitest run tests/buffer-parsing.test.ts",
+
     "format.fix": "prettier --write .",
     "typecheck": "tsc"
   },
+
   "dependencies": {
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
@@ -44,6 +52,7 @@
     "serverless-http": "^3.2.0",
     "zod": "^3.25.76"
   },
+
   "devDependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -123,5 +132,6 @@
     "vite": "^7.1.2",
     "vitest": "^3.2.4"
   },
-  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
+
+  "packageManager": "pnpm@10.14.0"
 }
