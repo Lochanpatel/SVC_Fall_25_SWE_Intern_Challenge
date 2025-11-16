@@ -27,7 +27,6 @@ jobs:
 
     env:
       NODE_ENV: test
-      # IMPORTANT: Make Postgres visible to backend tests
       PGHOST: localhost
       PGPORT: 5432
       PGUSER: test
@@ -45,7 +44,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Install client dependencies
@@ -57,42 +56,37 @@ jobs:
         run: |
           for i in {1..30}; do
             pg_isready -h localhost -p 5432 -U test -d fairdatause_test && exit 0
-            echo "Postgres not ready yet..."
+            echo "Postgres not ready yet…"
             sleep 2
           done
-          echo "Postgres did not start in time."
           exit 1
 
       - name: Run frontend tests with coverage
         env:
           SUPABASE_URL: http://localhost
           SUPABASE_ANON_KEY: test-anon-key
-        run: |
-          cd client
-          npm run test:frontend
+        run: npm run test:frontend:coverage
 
       - name: Run backend tests with coverage
-        run: |
-          npm run test:backend:coverage
+        run: npm run test:backend:coverage
 
-      - name: Upload coverage reports
+      - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
           path: |
-            client/coverage
-            server/coverage
-            coverage
+            coverage/frontend
+            coverage/backend
 
-      - name: Check coverage thresholds
+      - name: Verify coverage exists
         run: |
-          if [ ! -f client/coverage/lcov.info ]; then
-            echo "Frontend coverage report missing"
+          if [ ! -f coverage/frontend/lcov.info ]; then
+            echo "❌ Missing frontend coverage"
             exit 1
           fi
-          if [ ! -f server/coverage/lcov.info ] && [ ! -f coverage/lcov.info ]; then
-            echo "Backend coverage report missing"
+          if [ ! -f coverage/backend/lcov.info ]; then
+            echo "❌ Missing backend coverage"
             exit 1
           fi
 
@@ -101,8 +95,7 @@ jobs:
           cd client
           npm run build
 
-      - name: Archive build artifacts
-        if: always()
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
