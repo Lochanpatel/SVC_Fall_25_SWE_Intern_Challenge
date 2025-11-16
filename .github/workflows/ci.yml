@@ -9,7 +9,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      # set default env for job if needed; keep secrets for real supabase keys
       NODE_ENV: test
 
     services:
@@ -57,11 +56,10 @@ jobs:
           PGPASSWORD: test
 
       - name: Run frontend tests with coverage
-        # ensure NODE_ENV=test and provide supabase test env values to avoid the "Missing Supabase" error
         env:
           NODE_ENV: test
-          SUPABASE_URL: http://localhost          # dummy value for tests
-          SUPABASE_ANON_KEY: test-anon-key        # dummy value for tests
+          SUPABASE_URL: http://localhost
+          SUPABASE_ANON_KEY: test-anon-key
         run: |
           cd client
           npm run test:frontend
@@ -72,7 +70,6 @@ jobs:
           TEST_DATABASE_URL: postgresql://test:test@localhost:5432/fairdatause_test
           DATABASE_URL: postgresql://test:test@localhost:5432/fairdatause_test
         run: |
-          # if backend is in server/ or root backend script, adjust path accordingly
           cd server || true
           npm run test:backend:coverage
 
