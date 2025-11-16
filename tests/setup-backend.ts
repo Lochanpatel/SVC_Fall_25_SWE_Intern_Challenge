@@ -1,4 +1,3 @@
-// tests/setup-backend.ts
 import { beforeAll, afterAll, beforeEach, afterEach } from "vitest";
 import { Pool } from "pg";
 import { setupServer } from "msw/node";
@@ -9,18 +8,17 @@ import {
   cleanupDatabaseEnvironment,
 } from "./test-db-setup";
 
-// PostgreSQL pool (from CI service)
 let pool: Pool | null = null;
 
-// Mock server for API calls
 export const mockServer = setupServer(
   http.post("https://www.reddit.com/api/v1/access_token", () => {
     return HttpResponse.json({
       access_token: "mock_token",
-      token_type: "bearer",
       expires_in: 3600,
+      token_type: "bearer",
     });
   }),
+
   http.get("https://oauth.reddit.com/user/:username/about", ({ params }) => {
     const good = ["testuser", "validuser", "reddituser", "austrie"];
     if (good.includes(params.username as string)) {
@@ -34,8 +32,7 @@ export const mockServer = setupServer(
 );
 
 beforeAll(async () => {
-  console.log("🚀 Initializing backend test environment...");
-
+  console.log("🚀 Setting up backend tests...");
   await ensureDatabaseEnvironment();
 
   pool = new Pool({
@@ -46,30 +43,24 @@ beforeAll(async () => {
 
   process.env.NODE_ENV = "test";
   process.env.PING_MESSAGE = "test ping";
-
-  console.log("✅ Backend test environment ready.");
+  console.log("✅ Backend tests ready");
 });
 
 afterAll(async () => {
   mockServer.close();
-  if (pool) {
-    await pool.end();
-  }
+  if (pool) await pool.end();
   await cleanupDatabaseEnvironment();
-  console.log("🧹 Backend environment cleaned.");
+  console.log("🧹 Backend cleaned");
 });
 
-beforeEach(() => {
-  mockServer.resetHandlers();
-});
+beforeEach(() => mockServer.resetHandlers());
 
 afterEach(async () => {
-  if (pool) {
-    try {
-      await pool.query("DELETE FROM contractors");
-      await pool.query("DELETE FROM users");
-    } catch (e) {
-      console.log("⚠ Cleanup error, ignoring:", e);
-    }
+  if (!pool) return;
+  try {
+    await pool.query("DELETE FROM contractors");
+    await pool.query("DELETE FROM users");
+  } catch (e) {
+    console.log("⚠ Error cleaning test data:", e);
   }
 });
